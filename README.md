@@ -2,6 +2,12 @@
 
 A powerful, AI-driven web application that analyzes resumes and generates tailored cover letters using local Ollama models. Built with Flask and featuring an intuitive web interface with drag-and-drop functionality.
 
+
+https://github.com/user-attachments/assets/a9c0c584-8d31-4b9e-8ebf-5d4f6b53e52b
+
+
+
+
 ## ✨ Features
 
 ### 📄 Resume Analysis
