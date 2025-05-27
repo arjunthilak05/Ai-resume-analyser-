@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Analyzer & Enhancer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 2rem;
+        }
+
+        .status-indicator {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid #28a745;
+        }
+
+        .status-indicator.error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .status-indicator.warning {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 2px dashed #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #007bff;
+            background: #e3f2fd;
+        }
+
+        .upload-section.drag-over {
+            border-color: #007bff;
+            background: #e3f2fd;
+            transform: scale(1.02);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-display {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-wrapper:hover .file-input-display {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,123,255,0.3);
+        }
+
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 8px 20px rgba(40,167,69,0.3);
+        }
+
+        .results-section {
+            display: none;
+            margin-top: 2rem;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .result-header {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .result-content {
+            padding: 1.5rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .extracted-text {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .cover-letter-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab-btn {
+            background: #e9ecef;
+            color: #495057;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #721c24;
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #155724;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .tab-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 AI Resume Analyzer</h1>
+            <p>Upload your resume and get AI-powered feedback to enhance your career prospects</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Status Indicator -->
+            <div id="statusIndicator" class="status-indicator" style="display: none;">
+                <span id="statusText"></span>
+            </div>
+
+            <!-- Error/Success Messages -->
+            <div id="messageContainer"></div>
+
+            <!-- Tab Navigation -->
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab('analyze')">📄 Analyze Resume</button>
+                <button class="tab-btn" onclick="switchTab('cover-letter')">✉️ Generate Cover Letter</button>
+            </div>
+
+            <!-- Resume Analysis Tab -->
+            <div id="analyze-tab" class="tab-content active">
+                <form id="resumeForm" class="upload-section">
+                    <div class="form-group">
+                        <label for="resumeFile">Upload Resume (PDF, Image, or Text file)</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="resumeFile" name="resume_file" class="file-input" 
+                                   accept=".pdf,.png,.jpg,.jpeg,.gif,.txt">
+                            <div class="file-input-display">
+                                📎 Click to select resume file or drag & drop here
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>OR</label>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="resumeText">Paste Resume Text</label>
+                        <textarea id="resumeText" name="resume_text" class="form-control" 
+                                  rows="8" placeholder="Paste your resume content here..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="jobDescription">Job Description (Optional)</label>
+                        <textarea id="jobDescription" name="job_description" class="form-control" 
+                                  rows="5" placeholder="Paste the job description to get tailored feedback..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn">🚀 Analyze Resume</button>
+                </form>
+            </div>
+
+            <!-- Cover Letter Tab -->
+            <div id="cover-letter-tab" class="tab-content">
+                <form id="coverLetterForm" class="upload-section">
+                    <div class="form-group">
+                        <label for="clResumeText">Resume Content</label>
+                        <textarea id="clResumeText" class="form-control" rows="6" 
+                                  placeholder="Paste your resume content here..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="clJobDescription">Job Description</label>
+                        <textarea id="clJobDescription" class="form-control" rows="5" 
+                                  placeholder="Paste the job description here..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="companyName">Company Name (Optional)</label>
+                        <input type="text" id="companyName" class="form-control" 
+                               placeholder="Enter company name...">
+                    </div>
+
+                    <button type="submit" class="btn btn-secondary">✨ Generate Cover Letter</button>
+                </form>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loading" class="loading">
+                <div class="loading-spinner"></div>
+                <p id="loadingText">Processing with AI... This may take a moment.</p>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results" class="results-section">
+                <div class="result-card">
+                    <div class="result-header">📝 Extracted Text</div>
+                    <div class="result-content">
+                        <div id="extractedText" class="extracted-text"></div>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <div class="result-header">🤖 AI Analysis & Recommendations</div>
+                    <div id="analysis" class="result-content"></div>
+                </div>
+            </div>
+
+            <!-- Cover Letter Results -->
+            <div id="coverLetterResults" class="results-section">
+                <div class="result-card">
+                    <div class="result-header">✉️ Generated Cover Letter</div>
+                    <div id="coverLetterContent" class="result-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentResumeText = '';
+        const API_BASE_URL = window.location.origin; // Adjust this if your Flask app runs on a different port
+
+        // Check system status on load
+        window.addEventListener('load', function() {
+            checkSystemStatus();
+        });
+
+        async function checkSystemStatus() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                const status = await response.json();
+                
+                const indicator = document.getElementById('statusIndicator');
+                const statusText = document.getElementById('statusText');
+                
+                if (status.ollama_running && status.model_available) {
+                    indicator.className = 'status-indicator';
+                    statusText.textContent = '✅ System Ready - Ollama is running and AI model is available';
+                } else if (status.ollama_running && !status.model_available) {
+                    indicator.className = 'status-indicator warning';
+                    statusText.textContent = '⚠️ Ollama is running but AI model is not available. Available models: ' + 
+                        (status.available_models?.join(', ') || 'None');
+                } else {
+                    indicator.className = 'status-indicator error';
+                    statusText.textContent = '❌ Ollama is not running. Please start Ollama server first.';
+                }
+                
+                indicator.style.display = 'block';
+            } catch (error) {
+                const indicator = document.getElementById('statusIndicator');
+                const statusText = document.getElementById('statusText');
+                indicator.className = 'status-indicator error';
+                statusText.textContent = '❌ Cannot connect to backend server. Please ensure the Flask app is running.';
+                indicator.style.display = 'block';
+            }
+        }
+
+        function showMessage(message, type = 'error') {
+            const container = document.getElementById('messageContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'success' ? 'success-message' : 'error-message';
+            messageDiv.textContent = message;
+            container.innerHTML = '';
+            container.appendChild(messageDiv);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+            
+            // Hide results and messages
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('coverLetterResults').style.display = 'none';
+            document.getElementById('messageContainer').innerHTML = '';
+        }
+
+        // Handle file input display
+        document.getElementById('resumeFile').addEventListener('change', function(e) {
+            const display = document.querySelector('.file-input-display');
+            if (e.target.files.length > 0) {
+                display.textContent = `📎 Selected: ${e.target.files[0].name}`;
+                display.style.color = '#007bff';
+            } else {
+                display.textContent = '📎 Click to select resume file or drag & drop here';
+                display.style.color = '#6c757d';
+            }
+        });
+
+        // Resume analysis form
+        document.getElementById('resumeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('resumeFile');
+            const textInput = document.getElementById('resumeText');
+            const jobDescInput = document.getElementById('jobDescription');
+            
+            // Validate input
+            if (!fileInput.files[0] && !textInput.value.trim()) {
+                showMessage('Please upload a file or paste resume text.');
+                return;
+            }
+
+            // Prepare form data
+            const formData = new FormData();
+            
+            if (fileInput.files[0]) {
+                formData.append('resume_file', fileInput.files[0]);
+            }
+            
+            if (textInput.value.trim()) {
+                formData.append('resume_text', textInput.value.trim());
+            }
+            
+            if (jobDescInput.value.trim()) {
+                formData.append('job_description', jobDescInput.value.trim());
+            }
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('loadingText').textContent = 'Extracting text and analyzing with AI...';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('messageContainer').innerHTML = '';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                document.getElementById('loading').style.display = 'none';
+                
+                if (result.success) {
+                    // Display results
+                    document.getElementById('extractedText').textContent = result.extracted_text;
+                    document.getElementById('analysis').textContent = result.analysis;
+                    document.getElementById('results').style.display = 'block';
+                    
+                    // Auto-fill cover letter tab
+                    document.getElementById('clResumeText').value = result.extracted_text;
+                    currentResumeText = result.extracted_text;
+                    
+                    showMessage('Resume analyzed successfully!', 'success');
+                } else {
+                    showMessage(result.error || 'An error occurred while analyzing the resume.');
+                }
+                
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                showMessage('Network error: ' + error.message);
+            }
+        });
+
+        // Cover letter form
+        document.getElementById('coverLetterForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const resumeText = document.getElementById('clResumeText').value.trim();
+            const jobDescription = document.getElementById('clJobDescription').value.trim();
+            const companyName = document.getElementById('companyName').value.trim();
+            
+            if (!resumeText || !jobDescription) {
+                showMessage('Please provide both resume content and job description.');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('loadingText').textContent = 'Generating cover letter with AI...';
+            document.getElementById('coverLetterResults').style.display = 'none';
+            document.getElementById('messageContainer').innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/generate_cover_letter`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        resume_text: resumeText,
+                        job_description: jobDescription,
+                        company_name: companyName
+                    })
+                });
+                
+                const result = await response.json();
+                
+                document.getElementById('loading').style.display = 'none';
+                
+                if (result.success) {
+                    document.getElementById('coverLetterContent').textContent = result.cover_letter;
+                    document.getElementById('coverLetterResults').style.display = 'block';
+                    showMessage('Cover letter generated successfully!', 'success');
+                } else {
+                    showMessage(result.error || 'An error occurred while generating the cover letter.');
+                }
+                
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                showMessage('Network error: ' + error.message);
+            }
+        });
+
+        // Drag and drop functionality
+        const uploadSection = document.querySelector('.upload-section');
+        
+        uploadSection.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadSection.classList.add('drag-over');
+        });
+
+        uploadSection.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            if (!uploadSection.contains(e.relatedTarget)) {
+                uploadSection.classList.remove('drag-over');
+            }
+        });
+
+        uploadSection.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadSection.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const fileInput = document.getElementById('resumeFile');
+                fileInput.files = files;
+                
+                // Trigger change event to update display
+                const event = new Event('change', { bubbles: true });
+                fileInput.dispatchEvent(event);
+            }
+        });
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            document.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+    </script>
+</body>
+</html>
